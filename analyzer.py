@@ -4,8 +4,7 @@ import copy
 def main():
     #take user selection for which graph
     to_open = input("Select Graph 1 ,2 , 3, or 4.")
-    #switch case to pull up the right file
-    match to_open:
+    match to_open: #switch case to pull up the right file
         case '1':
             file = open("./unconnected/unconnected.txt", "r")
         case '2':
@@ -15,12 +14,9 @@ def main():
         case '4':
             file = open("./Euler_Path/path.txt", "r")
 
-    #file = open("./Euler_Cycle/cycle.txt", "r")
-
     graph = []
     for line in file:
         graph.append([int(x) for x in line.split(",")[0:-1]])   #pulls each line into a list, throws out the newline character
-
 
     print("Testing for a connected graph:")
     if connected(graph): #starts checking in order for the different attributes
@@ -66,23 +62,23 @@ def connected(graph, start=0, end="null"):
         for index, connection in enumerate(graph[node]): #pulls both the index of the node, as well as the connection list
             if index == end and connection: #checks for if this is our end node in the bridge case, returns true if so
                 return True
-            elif connection and not reached[index]: #checks if we have a connection to a node we still need
+            elif connection and not reached[index]: #checks if we have a connection to a node we still need, this prevents loops
                 reached[index] = 1 #says we have reached this new node
-                to_check.append(index) #
-    if all(reached):
+                to_check.append(index) #adds this node as another place to search from
+    if all(reached): #we only reach this code once the above loop dies out. Then we see if we have reached all nodes. all checks for boolean values, but 1s count as true
         isconnected = True
     else:
         isconnected = False
     return isconnected
     
 def hascycle(graph):
-    for node in graph:
+    for node in graph:# pretty simple, adds up connections of a given vertex and sees if it's even or not
         if (sum(node) % 2 != 0):
             return False
     return True
 
 def haspath(graph):
-    odd_count = 0
+    odd_count = 0 #similar to the last function, checks for if there are only 2 odd nodes, with the addition of storing which node it is to be used later
     for index, node in enumerate(graph):
         if (sum(node) % 2 != 0):
             odd_count += 1
@@ -91,29 +87,29 @@ def haspath(graph):
         return False, 0
     return True, start
 
-def findcycle(graph, start=0):
+def findcycle(graph, start=0):#defaults start to 0, so we can call it with just a graph to find a euler cycle
     route = []
     dad = start
-    children = findchildren(graph, start)
+    children = findchildren(graph, start)#seeds the loop with the children of the starting node
     while children:
-        if len(children) == 1:
+        if len(children) == 1:#if we only have one option left, we must take it, whether it is a bridge or not
             graph[dad][children[0]] = 0
-            graph[children[0]][dad] = 0
-            route.append("%s=>%s" % (dad + 1, children[0] + 1))
-            dad = children[0]
-            children = findchildren(graph, children[0])
+            graph[children[0]][dad] = 0#this is effectively deleting a edge from the graph
+            route.append("%s=>%s" % (dad + 1, children[0] + 1))#this adds our new connection to our final route. It's +1 to make the nodes start at 1, since humans are weird ¯\_(ツ)_/¯
+            dad = children[0] #makes the next loop have the child as dad
+            children = findchildren(graph, children[0]) #finds and seeds the children for the new dad
             continue
-        bridge_test = children.pop(0)
-        test_graph = copy.deepcopy(graph)
+        bridge_test = children.pop(0) #this code runs if we have multiple options
+        test_graph = copy.deepcopy(graph) #we create a new graph. copy.deepcopy makes sure we get a brand new clone of the original graph, not a reference to it. otherwise our tests destroy data
         test_graph[dad][bridge_test] = 0
-        test_graph[bridge_test][dad] = 0
-        if connected(test_graph, dad, bridge_test):
+        test_graph[bridge_test][dad] = 0 #removes the possible bridge from the test graph and sends it off to be tested for bridgeness
+        if connected(test_graph, dad, bridge_test): #does the same process as for a connected graph, but only cares about finding a path between these two nodes
             children = [bridge_test]
     return route
 
 def findchildren(graph, node):
-    children = []
-    for index, child in enumerate(graph[node]):
+    children = [] #simple function to find the "children" of a node
+    for index, child in enumerate(graph[node]): #just loops through looking for connections
         if child == 1:
             children.append(index)
     return children
